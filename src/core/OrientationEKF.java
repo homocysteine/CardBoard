@@ -25,11 +25,11 @@ public class OrientationEKF {
     private Vector3d mx;
     private Vector3d down;
     private Vector3d north;
-    private long sensorTimeStampGyro;
+    private double sensorTimeStampGyro;
     private final Vector3d lastGyro;
     private double previousAccelNorm;
     private double movingAverageAccelNormChange;
-    private float filteredGyroTimestep;
+    private double filteredGyroTimestep;
     private boolean timestepFilterInit;
     private int numGyroTimestepSamples;
     private boolean gyroFilterValid;
@@ -122,7 +122,7 @@ public class OrientationEKF {
     }
 
     public void reset() {
-        this.sensorTimeStampGyro = 0L;
+        this.sensorTimeStampGyro = 0;
         this.so3SensorFromWorld.setIdentity();
         this.so3LastMotion.setIdentity();
         final double initialSigmaP = 5.0;
@@ -191,6 +191,7 @@ public class OrientationEKF {
         pmu.set(this.lastGyro);
         pmu.scale(-secondsAfterLastGyroEvent);
         final Matrix3x3d so3PredictedMotion = this.getPredictedGLMatrixTempM1;
+        //这里有计算了一下so3PredictedMotion
         So3Util.sO3FromMu(pmu, so3PredictedMotion);
         final Matrix3x3d so3PredictedState = this.getPredictedGLMatrixTempM2;
         //3x3矩阵乘以三维向量，得到一个三维向量
@@ -219,11 +220,11 @@ public class OrientationEKF {
         return this.alignedToNorth;
     }
 
-    public synchronized void processGyro(final Vector3d gyro, final long sensorTimeStamp) {
-        final float kTimeThreshold = 0.04f;
-        final float kdTDefault = 0.01f;
-        if (this.sensorTimeStampGyro != 0L) {
-            float dT = (sensorTimeStamp - this.sensorTimeStampGyro) * 1.0E-9f;
+    public synchronized void processGyro(final Vector3d gyro, final double sensorTimeStamp) {
+        final double kTimeThreshold = 0.04;
+        final double kdTDefault = 0.01;
+        if (this.sensorTimeStampGyro != 0) {
+            double dT = sensorTimeStamp - this.sensorTimeStampGyro;
             if (dT > kTimeThreshold) {
                 dT = (this.gyroFilterValid ? this.filteredGyroTimestep : kdTDefault );
             }
@@ -258,7 +259,7 @@ public class OrientationEKF {
         this.mRaccel.setSameDiagonal(accelNoiseSigma * accelNoiseSigma);
     }
 
-    public synchronized void processAcc(final Vector3d acc, final long sensorTimeStamp) {
+    public synchronized void processAcc(final Vector3d acc, final double sensorTimeStamp) {
         this.mz.set(acc);
         this.updateAccelCovariance(this.mz.length());
         if (this.alignedToGravity) {
@@ -291,6 +292,8 @@ public class OrientationEKF {
             Matrix3x3d.mult(this.processAccTempM4, this.mP, this.processAccTempM3);
             this.mP.set(this.processAccTempM3);
             So3Util.sO3FromMu(this.mx, this.so3LastMotion);
+            //自定义mult的第三个参数才是result
+            //multiplyMM的第一个参数是result
             Matrix3x3d.mult(this.so3LastMotion, this.so3SensorFromWorld, this.so3SensorFromWorld);
             this.updateCovariancesAfterMotion();
         }
@@ -300,7 +303,8 @@ public class OrientationEKF {
         }
     }
 
-    public synchronized void processMag(final float[] mag, final long sensorTimeStamp) {
+    //处理地磁数据
+    public synchronized void processMag(final double[] mag, final double sensorTimeStamp) {
         if (!this.alignedToGravity) {
             return;
         }
@@ -377,8 +381,9 @@ public class OrientationEKF {
         return this.rotationMatrix;
     }
 
-    private void filterGyroTimestep(final float timeStep) {
-        final float kFilterCoeff = 0.95f;
+    //float改成double
+    private void filterGyroTimestep(final double timeStep) {
+        final double kFilterCoeff = 0.95;
         final int kMinSamples = 10;
         if (!this.timestepFilterInit) {
             this.filteredGyroTimestep = timeStep;
