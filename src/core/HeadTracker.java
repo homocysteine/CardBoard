@@ -34,10 +34,10 @@ public class HeadTracker {
         this.mLatestGyro = new Vector3d();
         this.mLatestAcc = new Vector3d();
         this.mDisplayRotation = Float.NaN;
-        //this.mSensorToDisplay = new double[16];
-        //this.mEkfToHeadTracker = new double[16];
-        this.mSensorToDisplay = new double[]{-4.371139E-8, 1.0, 0.0, 0.0, -1.0, -4.371139E-8, -0.0, 0.0, 0.0, -0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
-        this.mEkfToHeadTracker = new double[]{-4.371139E-8, -1.0, 0.0, 0.0, -4.371139E-8, 1.9106855E-15, 1.0, 0.0, -1.0, 4.371139E-8, -4.371139E-8, 0.0, 0.0, 0.0, 0.0, 1.0};
+        this.mSensorToDisplay = new double[16];
+        this.mEkfToHeadTracker = new double[16];
+//        this.mSensorToDisplay = new double[]{-4.371139E-8, 1.0, 0.0, 0.0, -1.0, -4.371139E-8, -0.0, 0.0, 0.0, -0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+//        this.mEkfToHeadTracker = new double[]{-4.371139E-8, -1.0, 0.0, 0.0, -4.371139E-8, 1.9106855E-15, 1.0, 0.0, -1.0, 4.371139E-8, -4.371139E-8, 0.0, 0.0, 0.0, 0.0, 1.0};
         this.mGyroBias = new Vector3d();
         this.mTmpHeadView = new double[16];
         this.mTmpHeadView2 = new double[16];
@@ -61,27 +61,28 @@ public class HeadTracker {
         float rotation = 0.0f;
 
         //这里需要判断这一次的自然旋转姿态和上一次的自然旋转姿态的状态一不一样，手动模拟的时候要注意
-//        if(rotation != this.mDisplayRotation){
-//            this.mDisplayRotation = rotation;
-//            Matrix.setRotateEulerM(this.mSensorToDisplay,0,0.0f,0.0f,-rotation);
-//            Matrix.setRotateEulerM(this.mEkfToHeadTracker,0,-90.0f,0.0f,rotation);
-//        }
+        if(rotation != this.mDisplayRotation){
+            this.mDisplayRotation = rotation;
+            Matrix.setRotateEulerM(this.mSensorToDisplay,0,0.0f,0.0f,-rotation);
+            Matrix.setRotateEulerM(this.mEkfToHeadTracker,0,-90.0f,0.0f,rotation);
+        }
 
         //接收返回前，需要传入一个时间间隔参数，这里不做设置
         //mat是由so3表示的旋转矩阵转换成的长度为16的变换矩阵
-        double[] mat = mTracker.getPredictedGLMatrix(0.03333333333333333);
+        double[] mat = mTracker.getPredictedGLMatrix(0.05);
         for(int i=0;i<headView.length;i++){
             this.mTmpHeadView[i] = mat[i];
         }
         System.out.println("变换矩阵: "+Arrays.toString(mat));
         //如何实现multiplyMM？接受的是两个数组参数，返回一个数组参数
         Matrix.multiplyMM(this.mTmpHeadView2,0,this.mSensorToDisplay,0,this.mTmpHeadView,0);
+        System.out.println("mTmpHeadView2:(before) "+Arrays.toString(mTmpHeadView2));
         Matrix.multiplyMM(headView,offset,this.mTmpHeadView2,0,this.mEkfToHeadTracker,0);
         System.out.println("mTmpHeadView2: "+Arrays.toString(mTmpHeadView2));
     }
 
 
-    public void readCSV(){
+    public void readCSV(HeadTracker headTracker, HeadTransform headTransform){
         Iterable<CSVRecord> records = null;
         try {
             Reader in = new FileReader("D:\\Logfiles\\01-Training\\01a-Regular\\T01_01\\ACCEGYROMAGN_java.csv");
@@ -120,14 +121,14 @@ public class HeadTracker {
                 //1s = 1000000000 ns
                 double[] timestamps = {timestampAcc,timestampGyro,timestampMag};
 
-                HeadTracker cardBoard = new HeadTracker();
-                HeadTransform head = new HeadTransform();
+                //HeadTracker cardBoard = new HeadTracker();
+                //HeadTransform head = new HeadTransform();
 
-                cardBoard.processData(mLatestAcc,gyro,mag,timestamps);
-                cardBoard.getLastHeadView(head.getHeadView(),0);
+                headTracker.processData(mLatestAcc,gyro,mag,timestamps);
+                headTracker.getLastHeadView(headTransform.getHeadView(),0);
 
                 //需要一个将数组转变成四元组，需要设置一个HeadTransform类
-                head.getQuaternion(q,0);
+                headTransform.getQuaternion(q,0);
                 quaternionList.add(q);
             }
         } catch (IOException e) {
@@ -176,24 +177,23 @@ public class HeadTracker {
     //原算法的数据来源是传感器，此处要读取csv文件中的数据
     public static void main(String[] args) {
         HeadTracker headTracker = new HeadTracker();
-
+        HeadTransform headTransform = new HeadTransform();
         //自动化读写代码
-        headTracker.readCSV();
+        headTracker.readCSV(headTracker,headTransform);
         for(double[] i:headTracker.quaternionList){
             System.out.println(Arrays.toString(i));
         }
         headTracker.writeCSV();
 
-        //HeadTransform headTransform = new HeadTransform();
         //手动测试用代码
-//        headTracker.mTracker.setSo3SensorFromWorld(new Matrix3x3d(   0.9999482121112826, 0.002068689548459569, -0.009964618356995752, 0.0024418706287495048, 0.9017513926020367, 0.43224815003435024, 0.009879795710485804, -0.4322500971241506, 0.9016996413290186));
+//        headTracker.mTracker.setSo3SensorFromWorld(new Matrix3x3d(    0.9999482121112826, 0.002068689548459569, -0.009964618356995752, 0.0024418706287495048, 0.9017513926020367, 0.43224815003435024, 0.009879795710485804, -0.4322500971241506, 0.9016996413290186));
 //        headTracker.mTracker.processAcc(new Vector3d( -0.047884032,4.1180267,8.772355),0);
-//        headTracker.mTracker.processGyro(new Vector3d(  0.009930924,0.0090408055,-0.0034906585),0);
+//        headTracker.mTracker.processGyro(new Vector3d(   0.009930924,0.0090408055,-0.0034906585),0);
 //        headTracker.mTracker.processAcc(new Vector3d( -0.047884032,4.10845,8.7532015),0);
-//        headTracker.mTracker.processAcc(new Vector3d(  -0.05746084,4.0892963,8.7532015),0);
+//        headTracker.mTracker.processAcc(new Vector3d(   -0.05746084,4.0892963,8.7532015),0);
 //        headTracker.mTracker.processGyro(new Vector3d(  0.006736971,0.019687314,-0.0034906585),0);
-
-
+//
+//
 //        headTracker.getLastHeadView(headTransform.getHeadView(),0);
 //        double[] q = new double[4];
 //        headTransform.getQuaternion(q,0);

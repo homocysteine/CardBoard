@@ -32,29 +32,30 @@ public class Test {
 //        System.out.println(res.get(0,0));
 //        System.out.println(res.get(8));
 
-        Iterable<CSVRecord> records = null;
-        try {
-            Reader in = new FileReader("D:\\Logfiles\\01-Training\\01a-Regular\\T01_01\\ACCEGYROMAGN.csv");
-            records = CSVFormat.DEFAULT.parse(in);
-            boolean flag = true;
-            int count = 0;
-            for(CSVRecord record:records){
-                //System.out.println(record.get(0));
-                count++;
-                if(flag==true){
-                    flag = false;
-                    continue;
-                }
-                //根据excel文件的格式，用索引读，比较方便
-                System.out.println(record.get(2)+" "+record.get(3)+" "+record.get(4)+" "+record.get(5));
-                System.out.println(record.get(8)+" "+record.get(9)+" "+record.get(10)+" "+record.get(11));
-                System.out.println(record.get(14)+" "+record.get(15)+" "+record.get(16)+" "+record.get(17));
-                if(count == 3){
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        Iterable<CSVRecord> records = null;
+//        try {
+//            Reader in = new FileReader("D:\\Logfiles\\01-Training\\01a-Regular\\T01_01\\ACCEGYROMAGN.csv");
+//            records = CSVFormat.DEFAULT.parse(in);
+//            boolean flag = true;
+//            int count = 0;
+//            for(CSVRecord record:records){
+//                //System.out.println(record.get(0));
+//                count++;
+//                if(flag==true){
+//                    flag = false;
+//                    continue;
+//                }
+//                //根据excel文件的格式，用索引读，比较方便
+//                System.out.println(record.get(2)+" "+record.get(3)+" "+record.get(4)+" "+record.get(5));
+//                System.out.println(record.get(8)+" "+record.get(9)+" "+record.get(10)+" "+record.get(11));
+//                System.out.println(record.get(14)+" "+record.get(15)+" "+record.get(16)+" "+record.get(17));
+//                if(count == 3){
+//                    break;
+//                }
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        System.out.println(Float.NaN==0.0f);
     }
 }

@@ -4,6 +4,8 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DenseD2Matrix64F;
 import org.ejml.dense.row.CommonOps_DDRM;
 
+import java.util.Arrays;
+
 public class Matrix {
     public static void setRotateEulerM(double[] rm, int rmOffset,
                                        double x, double y, double z) {
@@ -53,8 +55,15 @@ public class Matrix {
         CommonOps_DDRM.mult(lhsM,rhsM,resM);
         CommonOps_DDRM.transpose(resM);
 
+        System.out.println(Arrays.toString(result));
+
+        CommonOps_DDRM.transpose(lhsM);
+        CommonOps_DDRM.transpose(rhsM);
+
         for(int i=0;i<result.length;i++){
             result[i] = resM.get(i);
+            lhs[i] = lhsM.get(i);
+            rhs[i] = rhsM.get(i);
         }
     }
 
