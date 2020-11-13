@@ -13,6 +13,12 @@ public class HeadTransform {
         return this.mHeadView;
     }
 
+    public void setmHeadView(double[] mHeadView){
+        for(int i=0;i<mHeadView.length;i++){
+            this.mHeadView[i] = mHeadView[i];
+        }
+    }
+
     public void getQuaternion(final double[] quaternion, final int offset) {
         if (offset + 4 > quaternion.length) {
             throw new IllegalArgumentException("Not enough space to write the result");

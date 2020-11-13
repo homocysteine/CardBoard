@@ -121,6 +121,10 @@ public class OrientationEKF {
         this.reset();
     }
 
+    public void setSo3SensorFromWorld(Matrix3x3d so3SensorFromWorld) {
+        this.so3SensorFromWorld = so3SensorFromWorld;
+    }
+
     public void reset() {
         this.sensorTimeStampGyro = 0;
         this.so3SensorFromWorld.setIdentity();
@@ -197,6 +201,8 @@ public class OrientationEKF {
         //3x3矩阵乘以三维向量，得到一个三维向量
         Matrix3x3d.mult(so3PredictedMotion, this.so3SensorFromWorld, so3PredictedState);
         //参数是一个3x3矩阵，输出并返回的是一个用长度为16的double数组表示的旋转矩阵
+        //旋转矩阵算出来是对的！！
+        System.out.println("旋转矩阵: "+this.so3SensorFromWorld.toString());
         return this.glMatrixFromSo3(so3PredictedState);
     }
 
@@ -225,6 +231,7 @@ public class OrientationEKF {
         final double kdTDefault = 0.01;
         if (this.sensorTimeStampGyro != 0) {
             double dT = sensorTimeStamp - this.sensorTimeStampGyro;
+            //double dT = 0.005;
             if (dT > kTimeThreshold) {
                 dT = (this.gyroFilterValid ? this.filteredGyroTimestep : kdTDefault );
             }

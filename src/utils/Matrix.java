@@ -40,12 +40,18 @@ public class Matrix {
         rm[rmOffset + 15] =  1.0f;
     }
 
+    //矩阵的乘法没有错误....有错误！！！！OpenGL是列优先
     public static void multiplyMM(double[] result, int resultOffset,double[] lhs, int lhsOffset, double[] rhs, int rhsOffset){
         DMatrixRMaj lhsM = DMatrixRMaj.wrap(4,4,lhs);
+        CommonOps_DDRM.transpose(lhsM);
+
         DMatrixRMaj rhsM = DMatrixRMaj.wrap(4,4,rhs);
+        CommonOps_DDRM.transpose(rhsM);
+
         DMatrixRMaj resM = DMatrixRMaj.wrap(4,4,result);
 
         CommonOps_DDRM.mult(lhsM,rhsM,resM);
+        CommonOps_DDRM.transpose(resM);
 
         for(int i=0;i<result.length;i++){
             result[i] = resM.get(i);
