@@ -48,7 +48,6 @@ public class HeadTracker {
     public void processData(Vector3d mLatestAcc, Vector3d gyro, double[] mag,final double[] timestampList){
         //调用OrientationEKF中的processAcc函数
         //processAcc接收两个参数，一个是数据向量，一个是long类型的时间戳参数
-        //process和getPrediction的调用顺序？？
         mTracker.processAcc(mLatestAcc,timestampList[0]);
         mTracker.processGyro(gyro,timestampList[1]);
         //mTracker.processMag(mag,timestampList[2]);
@@ -58,7 +57,9 @@ public class HeadTracker {
     public void getLastHeadView(final double[] headView,final int offset){
         //用一个double数组接收来自OrientationEKF对象的getPredictGLMatrix函数
         //getPredictedGLMatrix接收一个double类型的函数
-        float rotation = 0.0f;
+        //300-340
+        //300 is the best
+        float rotation = 300.0f;
 
         //这里需要判断这一次的自然旋转姿态和上一次的自然旋转姿态的状态一不一样，手动模拟的时候要注意
         if(rotation != this.mDisplayRotation){
@@ -69,7 +70,7 @@ public class HeadTracker {
 
         //接收返回前，需要传入一个时间间隔参数，这里不做设置
         //mat是由so3表示的旋转矩阵转换成的长度为16的变换矩阵
-        double[] mat = mTracker.getPredictedGLMatrix(0.05);
+        double[] mat = mTracker.getPredictedGLMatrix(0.03833);
         for(int i=0;i<headView.length;i++){
             this.mTmpHeadView[i] = mat[i];
         }
@@ -180,13 +181,10 @@ public class HeadTracker {
         HeadTransform headTransform = new HeadTransform();
         //自动化读写代码
         headTracker.readCSV(headTracker,headTransform);
-//        for(double[] i:headTracker.quaternionList){
-//            System.out.println(Arrays.toString(i));
-//        }
         headTracker.writeCSV();
 
         //手动测试用代码
-//        headTracker.mTracker.setSo3SensorFromWorld(new Matrix3x3d(    0.9999482121112826, 0.002068689548459569, -0.009964618356995752, 0.0024418706287495048, 0.9017513926020367, 0.43224815003435024, 0.009879795710485804, -0.4322500971241506, 0.9016996413290186));
+//        headTracker.mTracker.setSo3SensorFromWorld(new Matrix3x3d( 0.9999482121112826, 0.002068689548459569, -0.009964618356995752, 0.0024418706287495048, 0.9017513926020367, 0.43224815003435024, 0.009879795710485804, -0.4322500971241506, 0.9016996413290186));
 //        headTracker.mTracker.processAcc(new Vector3d( -0.047884032,4.1180267,8.772355),0);
 //        headTracker.mTracker.processGyro(new Vector3d(   0.009930924,0.0090408055,-0.0034906585),0);
 //        headTracker.mTracker.processAcc(new Vector3d( -0.047884032,4.10845,8.7532015),0);
