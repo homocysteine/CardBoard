@@ -73,12 +73,12 @@ public class HeadTracker {
         for(int i=0;i<headView.length;i++){
             this.mTmpHeadView[i] = mat[i];
         }
-        System.out.println("变换矩阵: "+Arrays.toString(mat));
+        //System.out.println("变换矩阵: "+Arrays.toString(mat));
         //如何实现multiplyMM？接受的是两个数组参数，返回一个数组参数
         Matrix.multiplyMM(this.mTmpHeadView2,0,this.mSensorToDisplay,0,this.mTmpHeadView,0);
-        System.out.println("mTmpHeadView2:(before) "+Arrays.toString(mTmpHeadView2));
+        //System.out.println("mTmpHeadView2:(before) "+Arrays.toString(mTmpHeadView2));
         Matrix.multiplyMM(headView,offset,this.mTmpHeadView2,0,this.mEkfToHeadTracker,0);
-        System.out.println("mTmpHeadView2: "+Arrays.toString(mTmpHeadView2));
+        //System.out.println("mTmpHeadView2: "+Arrays.toString(mTmpHeadView2));
     }
 
 
@@ -180,9 +180,9 @@ public class HeadTracker {
         HeadTransform headTransform = new HeadTransform();
         //自动化读写代码
         headTracker.readCSV(headTracker,headTransform);
-        for(double[] i:headTracker.quaternionList){
-            System.out.println(Arrays.toString(i));
-        }
+//        for(double[] i:headTracker.quaternionList){
+//            System.out.println(Arrays.toString(i));
+//        }
         headTracker.writeCSV();
 
         //手动测试用代码

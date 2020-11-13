@@ -231,6 +231,8 @@ public class OrientationEKF {
         final double kdTDefault = 0.01;
         if (this.sensorTimeStampGyro != 0) {
             double dT = sensorTimeStamp - this.sensorTimeStampGyro;
+            //double dT = 0.001;
+            System.out.println("dT: "+dT);
             //double dT = 0.005;
             if (dT > kTimeThreshold) {
                 dT = (this.gyroFilterValid ? this.filteredGyroTimestep : kdTDefault );
