@@ -60,11 +60,11 @@ public class Matrix {
         CommonOps_DDRM.transpose(lhsM);
         CommonOps_DDRM.transpose(rhsM);
 
-        for(int i=0;i<result.length;i++){
-            result[i] = resM.get(i);
-            lhs[i] = lhsM.get(i);
-            rhs[i] = rhsM.get(i);
-        }
+//        for(int i=0;i<result.length;i++){
+//            result[i] = resM.get(i);
+//            lhs[i] = lhsM.get(i);
+//            rhs[i] = rhsM.get(i);
+//        }
     }
 
     public static void setIdentityM(double[] sm, int smOffset) {

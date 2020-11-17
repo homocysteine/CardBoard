@@ -36,8 +36,6 @@ public class HeadTracker {
         this.mDisplayRotation = Float.NaN;
         this.mSensorToDisplay = new double[16];
         this.mEkfToHeadTracker = new double[16];
-//        this.mSensorToDisplay = new double[]{-4.371139E-8, 1.0, 0.0, 0.0, -1.0, -4.371139E-8, -0.0, 0.0, 0.0, -0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
-//        this.mEkfToHeadTracker = new double[]{-4.371139E-8, -1.0, 0.0, 0.0, -4.371139E-8, 1.9106855E-15, 1.0, 0.0, -1.0, 4.371139E-8, -4.371139E-8, 0.0, 0.0, 0.0, 0.0, 1.0};
         this.mGyroBias = new Vector3d();
         this.mTmpHeadView = new double[16];
         this.mTmpHeadView2 = new double[16];
@@ -55,11 +53,10 @@ public class HeadTracker {
 
     //需要一个函数来专门处理输出矩阵
     public void getLastHeadView(final double[] headView,final int offset){
-        //用一个double数组接收来自OrientationEKF对象的getPredictGLMatrix函数
-        //getPredictedGLMatrix接收一个double类型的函数
         //300-340
         //300 is the best
-        float rotation = 300.0f;
+        //float rotation = 300.0f;
+        float rotation = 90.0f;
 
         //这里需要判断这一次的自然旋转姿态和上一次的自然旋转姿态的状态一不一样，手动模拟的时候要注意
         if(rotation != this.mDisplayRotation){
@@ -75,7 +72,6 @@ public class HeadTracker {
             this.mTmpHeadView[i] = mat[i];
         }
         //System.out.println("变换矩阵: "+Arrays.toString(mat));
-        //如何实现multiplyMM？接受的是两个数组参数，返回一个数组参数
         Matrix.multiplyMM(this.mTmpHeadView2,0,this.mSensorToDisplay,0,this.mTmpHeadView,0);
         //System.out.println("mTmpHeadView2:(before) "+Arrays.toString(mTmpHeadView2));
         Matrix.multiplyMM(headView,offset,this.mTmpHeadView2,0,this.mEkfToHeadTracker,0);
@@ -99,7 +95,7 @@ public class HeadTracker {
                 Vector3d mLatestAcc = new Vector3d();
                 Vector3d gyro = new Vector3d();
 
-                //根据excel文件的格式，用索引读，比较方便
+                //根据excel文件的格式，用索引读
                 double xxAcc = Double.parseDouble(record.get(3));
                 double yyAcc = Double.parseDouble(record.get(4));
                 double zzAcc = Double.parseDouble(record.get(5));
@@ -121,9 +117,6 @@ public class HeadTracker {
                 double[] mag = {mag1,mag2,mag3};
                 //1s = 1000000000 ns
                 double[] timestamps = {timestampAcc,timestampGyro,timestampMag};
-
-                //HeadTracker cardBoard = new HeadTracker();
-                //HeadTransform head = new HeadTransform();
 
                 headTracker.processData(mLatestAcc,gyro,mag,timestamps);
                 headTracker.getLastHeadView(headTransform.getHeadView(),0);
@@ -175,13 +168,69 @@ public class HeadTracker {
         }
     }
 
+    void readTxT(HeadTracker headTracker,HeadTransform headTransform){
+        File file = new File("D:\\CardBoard\\cardboard_data_3.txt");
+        BufferedReader reader = null;
+        String tempString = null;
+        FileOutputStream fileOutputStream = null;
+        File outfile = new File("D:\\CardBoard\\headview_offline.txt");
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            fileOutputStream = new FileOutputStream(outfile);
+            int line=0;
+            while((tempString = reader.readLine())!=null){
+                String[] datalist = tempString.split(" ");
+                double xx = Double.parseDouble(datalist[2]);
+                double yy = Double.parseDouble(datalist[3]);
+                double zz = Double.parseDouble(datalist[4]);
+                switch (tempString.charAt(0)){
+                    case '1':
+                        headTracker.mTracker.processAcc(new Vector3d(xx,yy,zz),0);
+                        break;
+                    case '2':
+                        headTracker.mTracker.processGyro(new Vector3d(xx,yy,zz),0);
+                        break;
+                    case '3':
+                        line++;
+                        headTracker.getLastHeadView(headTransform.getHeadView(),0);
+//                        double[] tempq = new double[4];
+//                        headTransform.getQuaternion(tempq,0);
+//                        fileOutputStream.write((line+" "+datalist[1]+" "+Arrays.toString(tempq)+"\n").getBytes());
+                        fileOutputStream.write((line+" "+datalist[1]+" "+Arrays.toString(headTransform.getHeadView())+"\n").getBytes());
+                        break;
+                    default:
+                        break;
+                }
+            }
+            reader.close();
+            fileOutputStream.flush();
+            fileOutputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            if(reader!=null){
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     //原算法的数据来源是传感器，此处要读取csv文件中的数据
     public static void main(String[] args) {
         HeadTracker headTracker = new HeadTracker();
         HeadTransform headTransform = new HeadTransform();
         //自动化读写代码
-        headTracker.readCSV(headTracker,headTransform);
-        headTracker.writeCSV();
+        //headTracker.readCSV(headTracker,headTransform);
+        //headTracker.writeCSV();
+
+        //模拟真实数据
+        headTracker.readTxT(headTracker,headTransform);
 
         //手动测试用代码
 //        headTracker.mTracker.setSo3SensorFromWorld(new Matrix3x3d( 0.9999482121112826, 0.002068689548459569, -0.009964618356995752, 0.0024418706287495048, 0.9017513926020367, 0.43224815003435024, 0.009879795710485804, -0.4322500971241506, 0.9016996413290186));
