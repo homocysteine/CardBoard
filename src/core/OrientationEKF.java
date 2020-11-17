@@ -4,12 +4,17 @@ import utils.Matrix3x3d;
 import utils.So3Util;
 import utils.Vector3d;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 public class OrientationEKF {
     private static final float NS2S = 1.0E-9f;
     private static final double MIN_ACCEL_NOISE_SIGMA = 0.75;
     private static final double MAX_ACCEL_NOISE_SIGMA = 7.0;
     private double[] rotationMatrix;
-    private Matrix3x3d so3SensorFromWorld;
+    public Matrix3x3d so3SensorFromWorld;
     private Matrix3x3d so3LastMotion;
     private Matrix3x3d mP;
     private Matrix3x3d mQ;
@@ -29,7 +34,7 @@ public class OrientationEKF {
     private final Vector3d lastGyro;
     private double previousAccelNorm;
     private double movingAverageAccelNormChange;
-    private double filteredGyroTimestep;
+    private float filteredGyroTimestep;
     private boolean timestepFilterInit;
     private int numGyroTimestepSamples;
     private boolean gyroFilterValid;
@@ -190,6 +195,7 @@ public class OrientationEKF {
     }
 
     public double[] getPredictedGLMatrix(final double secondsAfterLastGyroEvent) {
+
         final Vector3d pmu = this.getPredictedGLMatrixTempV1;
         //数据来自processGyro
         pmu.set(this.lastGyro);
@@ -202,7 +208,7 @@ public class OrientationEKF {
         Matrix3x3d.mult(so3PredictedMotion, this.so3SensorFromWorld, so3PredictedState);
         //参数是一个3x3矩阵，输出并返回的是一个用长度为16的double数组表示的旋转矩阵
         //旋转矩阵算出来是对的！！
-        System.out.println("旋转矩阵: "+this.so3SensorFromWorld.toString());
+        //System.out.println("旋转矩阵: "+this.so3SensorFromWorld.toString());
         return this.glMatrixFromSo3(so3PredictedState);
     }
 
@@ -227,10 +233,10 @@ public class OrientationEKF {
     }
 
     public synchronized void processGyro(final Vector3d gyro, final double sensorTimeStamp) {
-        final double kTimeThreshold = 0.04;
-        final double kdTDefault = 0.01;
+        final float kTimeThreshold = 0.04f;
+        final float kdTDefault = 0.01f;
         if (this.sensorTimeStampGyro != 0) {
-            double dT = sensorTimeStamp - this.sensorTimeStampGyro;
+            float dT = (float)(sensorTimeStamp - this.sensorTimeStampGyro);
             //System.out.println("dT: "+dT);
             //double dT = 0.005;
             if (dT > kTimeThreshold) {
@@ -390,8 +396,8 @@ public class OrientationEKF {
     }
 
     //float改成double
-    private void filterGyroTimestep(final double timeStep) {
-        final double kFilterCoeff = 0.95;
+    private void filterGyroTimestep(final float timeStep) {
+        final float kFilterCoeff = 0.95f;
         final int kMinSamples = 10;
         if (!this.timestepFilterInit) {
             this.filteredGyroTimestep = timeStep;

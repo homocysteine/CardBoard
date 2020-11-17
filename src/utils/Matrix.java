@@ -4,22 +4,23 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.data.DenseD2Matrix64F;
 import org.ejml.dense.row.CommonOps_DDRM;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 
 public class Matrix {
-    public static void setRotateEulerM(double[] rm, int rmOffset,
-                                       double x, double y, double z) {
-        x *= (Math.PI / 180.0f);
-        y *= (Math.PI / 180.0f);
-        z *= (Math.PI / 180.0f);
-        double cx = Math.cos(x);
-        double sx = Math.sin(x);
-        double cy = Math.cos(y);
-        double sy = Math.sin(y);
-        double cz = Math.cos(z);
-        double sz = Math.sin(z);
-        double cxsy = cx * sy;
-        double sxsy = sx * sy;
+    public static void setRotateEulerM(float[] rm, int rmOffset,
+                                       float x, float y, float z) {
+        x *= (float)(Math.PI / 180.0f);
+        y *= (float)(Math.PI / 180.0f);
+        z *= (float)(Math.PI / 180.0f);
+        float cx = (float) Math.cos(x);
+        float sx = (float) Math.sin(x);
+        float cy = (float) Math.cos(y);
+        float sy = (float) Math.sin(y);
+        float cz = (float) Math.cos(z);
+        float sz = (float) Math.sin(z);
+        float cxsy = cx * sy;
+        float sxsy = sx * sy;
 
         rm[rmOffset + 0]  =   cy * cz;
         rm[rmOffset + 1]  =  -cy * sz;
@@ -42,15 +43,28 @@ public class Matrix {
         rm[rmOffset + 15] =  1.0f;
     }
 
+    static double[] double2Float(float[] list){
+        double[] doubleList = new double[list.length];
+        for(int i=0;i<list.length;i++){
+            doubleList[i] = new BigDecimal(String.valueOf(list[i])).doubleValue();
+        }
+        return doubleList;
+    }
+
     //矩阵的乘法没有错误....有错误！！！！OpenGL是列优先
-    public static void multiplyMM(double[] result, int resultOffset,double[] lhs, int lhsOffset, double[] rhs, int rhsOffset){
-        DMatrixRMaj lhsM = DMatrixRMaj.wrap(4,4,lhs);
+    public static void multiplyMM(float[] result, int resultOffset,float[] lhs, int lhsOffset, float[] rhs, int rhsOffset){
+        //double->float不会出现数据误差
+        //float->double会出现数据误差
+        double[] lhsList = double2Float(lhs);
+        double[] rhsList = double2Float(rhs);
+        double[] resultList = double2Float(result);
+        DMatrixRMaj lhsM = DMatrixRMaj.wrap(4,4,lhsList);
         CommonOps_DDRM.transpose(lhsM);
 
-        DMatrixRMaj rhsM = DMatrixRMaj.wrap(4,4,rhs);
+        DMatrixRMaj rhsM = DMatrixRMaj.wrap(4,4,rhsList);
         CommonOps_DDRM.transpose(rhsM);
 
-        DMatrixRMaj resM = DMatrixRMaj.wrap(4,4,result);
+        DMatrixRMaj resM = DMatrixRMaj.wrap(4,4,resultList);
 
         CommonOps_DDRM.mult(lhsM,rhsM,resM);
         CommonOps_DDRM.transpose(resM);
@@ -60,14 +74,14 @@ public class Matrix {
         CommonOps_DDRM.transpose(lhsM);
         CommonOps_DDRM.transpose(rhsM);
 
-//        for(int i=0;i<result.length;i++){
-//            result[i] = resM.get(i);
-//            lhs[i] = lhsM.get(i);
-//            rhs[i] = rhsM.get(i);
-//        }
+        for(int i=0;i<result.length;i++){
+            result[i] = (float) resM.get(i);
+            lhs[i] = (float) lhsM.get(i);
+            rhs[i] = (float) rhsM.get(i);
+        }
     }
 
-    public static void setIdentityM(double[] sm, int smOffset) {
+    public static void setIdentityM(float[] sm, int smOffset) {
         for (int i=0 ; i<16 ; i++) {
             sm[smOffset + i] = 0;
         }
