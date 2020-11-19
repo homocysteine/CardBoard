@@ -30,7 +30,7 @@ public class OrientationEKF {
     private Vector3d mx;
     private Vector3d down;
     private Vector3d north;
-    private double sensorTimeStampGyro;
+    private float sensorTimeStampGyro;
     private final Vector3d lastGyro;
     private double previousAccelNorm;
     private double movingAverageAccelNormChange;
@@ -208,7 +208,7 @@ public class OrientationEKF {
         Matrix3x3d.mult(so3PredictedMotion, this.so3SensorFromWorld, so3PredictedState);
         //参数是一个3x3矩阵，输出并返回的是一个用长度为16的double数组表示的旋转矩阵
         //旋转矩阵算出来是对的！！
-        //System.out.println("旋转矩阵: "+this.so3SensorFromWorld.toString());
+        System.out.println("旋转矩阵: "+this.so3SensorFromWorld.toString());
         return this.glMatrixFromSo3(so3PredictedState);
     }
 
@@ -232,11 +232,13 @@ public class OrientationEKF {
         return this.alignedToNorth;
     }
 
-    public synchronized void processGyro(final Vector3d gyro, final double sensorTimeStamp) {
+    public synchronized void processGyro(final Vector3d gyro, final float sensorTimeStamp) {
         final float kTimeThreshold = 0.04f;
         final float kdTDefault = 0.01f;
-        if (this.sensorTimeStampGyro != 0) {
-            float dT = (float)(sensorTimeStamp - this.sensorTimeStampGyro);
+        if (this.sensorTimeStampGyro != 0f) {
+            //float dT = (float)(sensorTimeStamp - this.sensorTimeStampGyro);
+            //比赛数据时间戳为秒级
+            float dT = sensorTimeStamp - this.sensorTimeStampGyro;
             //System.out.println("dT: "+dT);
             //double dT = 0.005;
             if (dT > kTimeThreshold) {
@@ -273,7 +275,7 @@ public class OrientationEKF {
         this.mRaccel.setSameDiagonal(accelNoiseSigma * accelNoiseSigma);
     }
 
-    public synchronized void processAcc(final Vector3d acc, final double sensorTimeStamp) {
+    public synchronized void processAcc(final Vector3d acc, final float sensorTimeStamp) {
         this.mz.set(acc);
         this.updateAccelCovariance(this.mz.length());
         if (this.alignedToGravity) {
@@ -394,8 +396,7 @@ public class OrientationEKF {
         this.rotationMatrix[15] = 1.0;
         return this.rotationMatrix;
     }
-
-    //float改成double
+    
     private void filterGyroTimestep(final float timeStep) {
         final float kFilterCoeff = 0.95f;
         final int kMinSamples = 10;
